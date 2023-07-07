@@ -58,6 +58,7 @@ public class Parser
         return records.ToArray();
     }
 
+    // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
     private Footer900 ParseFooter(string[] lineSplit)
     {
         if (lineSplit.Length != 1) throw new ApplicationException("Invalid Footer Record (length)");
@@ -104,12 +105,9 @@ public class Parser
         SeriesDecimal currentSeries = null;
         var nemInterval = -1;
         var nemUom = DataUnitOfMeasure.Unknown;
-        string seriesName = null;
 
-        var lineCount = 0;
         foreach (var nemRecord in nemFile)
         {
-            lineCount++;
             if (nemRecord.RecordIndicator == 200)
             {
                 // NMI Data Details (start of series)
@@ -117,7 +115,7 @@ public class Parser
 
                 var dss = new DataStreamSuffix(nemDataDetail.NMISuffix);
 
-                seriesName = $@"{nemDataDetail.NMI}/{nemDataDetail.NMISuffix} ({dss.DataType})";
+                var seriesName = $@"{nemDataDetail.NMI}/{nemDataDetail.NMISuffix} ({dss.DataType})";
                 nemInterval = nemDataDetail.IntervalLength;
                 nemUom = nemDataDetail.UOM;
 
@@ -141,8 +139,6 @@ public class Parser
                 // Check range
                 if (datarecord.IntervalDate < graphFrom || datarecord.IntervalDate > graphTo)
                     continue;
-
-                Console.WriteLine(@"Found line #{lineCount}");
 
                 // Check if match to desired interval and unit of meassure
                 if (graphInterval == nemInterval && nemUom == graphUom)

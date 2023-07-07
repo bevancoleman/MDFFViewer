@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDFFViewerConsole", "MDFFVi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDFFParserLibrary_Tests", "MDFFParserLibrary_Tests\MDFFParserLibrary_Tests.csproj", "{02ADEE1B-A13F-42D7-B58E-90EEADD45515}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Console", "Console", "{3A55BF1F-4779-4601-B0DE-CAB6415B0CC8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{69E7AD1C-1E87-4EFA-826F-B07D65C9EF03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,10 @@ Global
 		{02ADEE1B-A13F-42D7-B58E-90EEADD45515}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02ADEE1B-A13F-42D7-B58E-90EEADD45515}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02ADEE1B-A13F-42D7-B58E-90EEADD45515}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9BF6F1CD-A0C3-4FF0-9428-67167C501B66} = {3A55BF1F-4779-4601-B0DE-CAB6415B0CC8}
+		{ED300EFB-65AB-4081-B901-B1E84F35CBDF} = {69E7AD1C-1E87-4EFA-826F-B07D65C9EF03}
+		{02ADEE1B-A13F-42D7-B58E-90EEADD45515} = {69E7AD1C-1E87-4EFA-826F-B07D65C9EF03}
 	EndGlobalSection
 EndGlobal
