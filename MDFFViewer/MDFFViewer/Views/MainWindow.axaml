@@ -7,6 +7,32 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MDFFViewer.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
-        Title="MDFFViewer">
-        <views:MainView />
+        Title="Meter Data File Format Viewer"
+        
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+        
+        <Panel>
+                
+                <ExperimentalAcrylicBorder IsHitTestVisible="False">
+                        <ExperimentalAcrylicBorder.Material>
+                                <ExperimentalAcrylicMaterial
+                                        BackgroundSource="Digger"
+                                        TintColor="Black"
+                                        TintOpacity="1"
+                                        MaterialOpacity="0.65" />
+                        </ExperimentalAcrylicBorder.Material>
+                </ExperimentalAcrylicBorder>
+                
+                <DockPanel>
+                        <!-- This is getting in the way of the titlebar drag and drop.... -->
+                        <RelativePanel Margin="5 5 150 5" DockPanel.Dock="Top" Height="40">
+                                <TextBlock Text="ajsdkasjdkljakl" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True"></TextBlock>
+                                <Button RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True" Width="100" HorizontalContentAlignment="Center">Dark</Button>
+                        </RelativePanel>
+                        
+                        <views:MainView />                        
+                </DockPanel>
+        </Panel>
 </Window>
