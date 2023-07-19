@@ -4,6 +4,7 @@ using MDFFParserLibrary.Models;
 using MDFFParserLibrary.Models.Enums;
 using MDFFParserLibrary.Models.Graph;
 using MDFFParserLibrary.Models.IntervalMeteringData;
+using MDFFParserLibrary.Models.Tariffs;
 using MDFFParserLibrary.Utility;
 
 namespace MDFFParserLibrary;
@@ -78,8 +79,7 @@ public class Parser
     }
 
 
-    public BasicGraph ConvertToSeries(IEnumerable<BaseNem> nemFile, DateTime graphFrom, DateTime graphTo,
-        int graphInterval, DataUnitOfMeasure graphUom)
+    public BasicGraph ConvertToSeries(IEnumerable<BaseNem> nemFile, DateTime graphFrom, DateTime graphTo, int graphInterval, DataUnitOfMeasure graphUom)
     {
         // make sure date only
         graphFrom = graphFrom.Date;
@@ -89,19 +89,34 @@ public class Parser
 
         var results = new BasicGraph();
 
-        // Work out Axis buckets
-        results.Axis = new AxisDateTime
-        {
-            Name = "Timeline"
-        };
+        results.Axis = GenerateAxis(graphFrom, graphTo, graphInterval);
+        results.DataSeries = GenerateDataSeries(nemFile, graphFrom, graphTo, graphInterval, graphUom);
+        results.ValueSeries = GenerateValueSeries(results.DataSeries, graphInterval);
 
-        var bucket = graphFrom;
-        while (bucket < graphTo.AddDays(1))
+        return results;
+    }
+
+    private Dictionary<string, SeriesDecimal> GenerateValueSeries(Dictionary<string, SeriesDecimal> resultsDataSeries, int intervals)
+    {
+        var result = new Dictionary<string, SeriesDecimal>();
+
+        var mainExportRates = new TimeOfUse(intervals, 0.88429m);
+        mainExportRates.SetTariff("Peak",new TimeSpan(6,0,0), new TimeSpan(10,0,0), 0.44539m);
+        
+        var controlledLoadRates = new SingleRate(intervals, 0m);
+
+        foreach (var data in resultsDataSeries)
         {
-            results.Axis.Values.Add(bucket.ToString(), bucket);
-            bucket += new TimeSpan(0, graphInterval, 0);
+            
         }
 
+        return result;
+    }
+
+    private static Dictionary<string, SeriesDecimal> GenerateDataSeries(IEnumerable<BaseNem> nemFile, DateTime graphFrom, DateTime graphTo, int graphInterval, DataUnitOfMeasure graphUom)
+    {
+        var results = new Dictionary<string, SeriesDecimal>();
+        
         SeriesDecimal currentSeries = null;
         var nemInterval = -1;
         var nemUom = DataUnitOfMeasure.Unknown;
@@ -121,10 +136,10 @@ public class Parser
 
                 if (currentSeries == null || currentSeries.Name != seriesName)
                     // Not current series, check if in collection or make new one (and add it)
-                    if (!results.DataSeries.TryGetValue(seriesName, out currentSeries))
+                    if (!results.TryGetValue(seriesName, out currentSeries))
                     {
                         currentSeries = new SeriesDecimal(seriesName);
-                        results.DataSeries.Add(seriesName, currentSeries);
+                        results.Add(seriesName, currentSeries);
                     }
             }
             else if (nemRecord.RecordIndicator == 300)
@@ -152,5 +167,23 @@ public class Parser
         }
 
         return results;
+    }
+
+    private static AxisDateTime GenerateAxis(DateTime graphFrom, DateTime graphTo, int graphInterval)
+    {
+        // Work out Axis buckets
+        var result = new AxisDateTime
+        {
+            Name = "Timeline"
+        };
+
+        var bucket = graphFrom;
+        while (bucket < graphTo.AddDays(1))
+        {
+            result.Values.Add(bucket.ToString(), bucket);
+            bucket += new TimeSpan(0, graphInterval, 0);
+        }
+
+        return result;
     }
 }
