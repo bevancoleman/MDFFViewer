@@ -3,6 +3,7 @@ using MDFFParserLibrary.Utility;
 
 namespace MDFFParserLibrary_Tests;
 
+[TestFixture]
 public class DataRemappingTests
 {
     //private IntervalDataRecord _parser;

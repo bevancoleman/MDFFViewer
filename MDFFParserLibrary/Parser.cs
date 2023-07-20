@@ -100,13 +100,52 @@ public class Parser
     {
         var result = new Dictionary<string, SeriesDecimal>();
 
-        var mainExportRates = new TimeOfUse(intervals, 0.88429m);
-        mainExportRates.SetTariff("Peak",new TimeSpan(6,0,0), new TimeSpan(10,0,0), 0.44539m);
+        // Setup main rate
+        var mainExportRates = new TimeOfUseRate(intervals);
+        const string StrPeak = "Peak";
+        const string StrOffPeak = "Off-Peak";
+        const string StrShoulder = "Shoulder";
         
+        // - Peak 6am-10am
+        mainExportRates.SetTariff(StrPeak,6, 10, 0.44539m);
+        
+        // - Peak 3pm-1am
+        mainExportRates.SetTariff(StrPeak,15, 24, 0.44539m);
+        mainExportRates.SetTariff(StrPeak,0, 1, 0.44539m);
+        
+        // - Off-peak 1am-6am 
+        mainExportRates.SetTariff(StrOffPeak,1, 6, 0.30734m);
+        
+        // - Shoulder 10am-3pm
+        mainExportRates.SetTariff(StrShoulder,10, 15, 0.24431m);
+        
+        // Setup Controlled Rate
         var controlledLoadRates = new SingleRate(intervals, 0m);
+        // TODO - Setup Controlled Rate
+        
+        // Setup Solar Export Rate
+        // TODO - Setup Solar Export Rate
+        
+        // Setup Supply Charge
+        var supplyCharge = new SupplyChargeRate(intervals, 0.88429m);
 
+        // For each series line, create a new value series, applying to relevant rate
         foreach (var data in resultsDataSeries)
         {
+            switch (data.Key)
+            {
+                case "1234567890/E1 (Export)":
+                    
+                    break;
+                case "1234567890/B1 (Import)":
+                    
+                    break;
+                case "1234567890/E2 (Export)":
+                    
+                    break;
+                default:
+                    throw new Exception("Unmapped meter");
+            }
             
         }
 

@@ -1,36 +1,32 @@
 ﻿namespace MDFFParserLibrary.Models.Tariffs;
 
-public class TimeOfUse
+public class TimeOfUseRate : IRate
 {
     public int IntervalsPerDay { get; private set; }
-    public decimal SupplyChargePerDay { get; private set; }
-    
     public decimal[] TariffPerInterval { get; private set; }
     public string[] TariffNamePerInterval { get; private set; }
     
-    public decimal[] SupplyChargePerInterval { get; private set; }
+    public int MinsPerIntervalInDay { get; private set; }
         
-    public TimeOfUse(int intervalsPerDay, decimal supplyChargePerDay)
+    public TimeOfUseRate(int intervalsPerDay)
     {
         if (intervalsPerDay > 24 * 60)
         {
             throw new ArgumentException("intervalsPerDay can't be smaller than a min.");
         }
         IntervalsPerDay = intervalsPerDay;
-        SupplyChargePerDay = supplyChargePerDay;
-
-        // Supply Charge, Fill with shared value
-        var charge = SupplyChargePerDay / IntervalsPerDay;
-        SupplyChargePerInterval = Enumerable.Repeat<decimal>(charge, IntervalsPerDay).ToArray();
         
         // Tariff
         TariffPerInterval = new decimal[IntervalsPerDay];
         TariffNamePerInterval = new string[IntervalsPerDay];
+        
+        // Set Min per Interval in day
+        MinsPerIntervalInDay = 24 * 60 / IntervalsPerDay;
     }
     
     public void SetTariff(string name, int fromInterval, int toInterval, decimal rateIncGst)
     {
-        for (int i = fromInterval; i <= toInterval; i++)
+        for (int i = fromInterval; i < toInterval; i++)
         {
             TariffPerInterval[i] = rateIncGst;
             TariffNamePerInterval[i] = name;
@@ -39,32 +35,34 @@ public class TimeOfUse
     
     public void SetTariff(string name, TimeSpan fromInterval, TimeSpan toInterval, decimal rateIncGst)
     {
-        throw new NotImplementedException();
-        var fromIntervalInt = 0;
-        var toIntervalInt = 0;
+        var fromIntervalInt = (int)(fromInterval.TotalMinutes) / MinsPerIntervalInDay;
+        var toIntervalInt = (int)(toInterval.TotalMinutes) / MinsPerIntervalInDay;;
         SetTariff(name, fromIntervalInt, toIntervalInt, rateIncGst);
     }
 
-    public decimal GetRate(int interval, bool includeSupply)
+    public decimal GetRate(int interval)
     {
         if (interval < 0 || interval >= TariffPerInterval.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(interval));
         }
-
-        var result = TariffPerInterval[interval];
-        if (includeSupply)
-        {
-            result += SupplyChargePerInterval[interval];
-        }
-        return result;
+        return TariffPerInterval[interval];
     }
     
-    public decimal GetRate(TimeSpan timeOfDay, bool includeSupply)
+    public decimal GetRate(TimeSpan timeOfDay)
     {
-        var minsInInterval = 24 * 60 / IntervalsPerDay;
-        var interval = (int)(timeOfDay.TotalMinutes) / minsInInterval;
-        
-        return GetRate(interval, includeSupply);
+        var interval = (int)(timeOfDay.TotalMinutes) / MinsPerIntervalInDay;
+        return GetRate(interval);
+    }
+
+    public string GetName(int interval)
+    {
+        return TariffNamePerInterval[interval];
+    }
+
+    public string GetName(TimeSpan timeOfDay)
+    {
+        var interval = (int)(timeOfDay.TotalMinutes) / MinsPerIntervalInDay;
+        return GetName(interval);
     }
 }

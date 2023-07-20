@@ -3,6 +3,7 @@ using MDFFParserLibrary.Models;
 
 namespace MDFFParserLibrary_Tests;
 
+[TestFixture]
 public class IntervalDataRecord300Tests
 {
     private IntervalDataRecord _parser;
