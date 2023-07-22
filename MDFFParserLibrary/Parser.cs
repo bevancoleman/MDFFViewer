@@ -1,4 +1,5 @@
-﻿using MDFFParserLibrary.Field;
+﻿using System.Diagnostics.Tracing;
+using MDFFParserLibrary.Field;
 using MDFFParserLibrary.Line;
 using MDFFParserLibrary.Models;
 using MDFFParserLibrary.Models.Enums;
@@ -89,45 +90,48 @@ public class Parser
 
         var results = new BasicGraph();
 
+        var intervalsPerDay = 24 * 60 / graphInterval;
+
         results.Axis = GenerateAxis(graphFrom, graphTo, graphInterval);
         results.DataSeries = GenerateDataSeries(nemFile, graphFrom, graphTo, graphInterval, graphUom);
-        results.ValueSeries = GenerateValueSeries(results.DataSeries, graphInterval);
+        results.ValueSeries = GenerateValueSeries(results.DataSeries, intervalsPerDay);
 
         return results;
     }
 
-    private Dictionary<string, SeriesDecimal> GenerateValueSeries(Dictionary<string, SeriesDecimal> resultsDataSeries, int intervals)
+    private Dictionary<string, SeriesEnergy> GenerateValueSeries(Dictionary<string, SeriesEnergy> resultsDataSeries, int intervalsPerDay)
     {
-        var result = new Dictionary<string, SeriesDecimal>();
+        var result = new Dictionary<string, SeriesEnergy>();
 
         // Setup main rate
-        var mainExportRates = new TimeOfUseRate(intervals);
+        var mainExportRates = new TimeOfUseRate(intervalsPerDay);
         const string StrPeak = "Peak";
         const string StrOffPeak = "Off-Peak";
         const string StrShoulder = "Shoulder";
         
         // - Peak 6am-10am
-        mainExportRates.SetTariff(StrPeak,6, 10, 0.44539m);
+        mainExportRates.SetTariff(StrPeak,new TimeSpan(6,0,0), new TimeSpan(10,0,0), 0.44539m);
         
         // - Peak 3pm-1am
-        mainExportRates.SetTariff(StrPeak,15, 24, 0.44539m);
-        mainExportRates.SetTariff(StrPeak,0, 1, 0.44539m);
+        mainExportRates.SetTariff(StrPeak,new TimeSpan(15,0,0), new TimeSpan(24,0,0), 0.44539m);
+        mainExportRates.SetTariff(StrPeak,new TimeSpan(0,0,0), new TimeSpan(1,0,0), 0.44539m);
         
         // - Off-peak 1am-6am 
-        mainExportRates.SetTariff(StrOffPeak,1, 6, 0.30734m);
+        mainExportRates.SetTariff(StrOffPeak,new TimeSpan(1,0,0), new TimeSpan(6,0,0), 0.30734m);
         
         // - Shoulder 10am-3pm
-        mainExportRates.SetTariff(StrShoulder,10, 15, 0.24431m);
+        mainExportRates.SetTariff(StrShoulder,new TimeSpan(10,0,0), new TimeSpan(15,0,0), 0.24431m);
         
         // Setup Controlled Rate
-        var controlledLoadRates = new SingleRate(intervals, 0m);
+        var controlledLoadRates = new SingleRate(intervalsPerDay, 0m);
         // TODO - Setup Controlled Rate
         
         // Setup Solar Export Rate
+        var solarRates = new VolumeRate();
         // TODO - Setup Solar Export Rate
         
         // Setup Supply Charge
-        var supplyCharge = new SupplyChargeRate(intervals, 0.88429m);
+        var supplyCharge = new SupplyChargeRate(intervalsPerDay, 0.88429m);
 
         // For each series line, create a new value series, applying to relevant rate
         foreach (var data in resultsDataSeries)
@@ -135,28 +139,47 @@ public class Parser
             switch (data.Key)
             {
                 case "1234567890/E1 (Export)":
-                    
+                    result.Add("E1", CalculateValueSeries("E1", data.Value, mainExportRates) );
                     break;
+                
                 case "1234567890/B1 (Import)":
-                    
+                    //result.Add("B1", CalculateValueSeries(data, solarRates) );  
                     break;
+                
                 case "1234567890/E2 (Export)":
-                    
+                    //result.Add("E2", CalculateValueSeries(data, mainExportRates) );                    
                     break;
+                
                 default:
                     throw new Exception("Unmapped meter");
             }
-            
         }
-
         return result;
     }
 
-    private static Dictionary<string, SeriesDecimal> GenerateDataSeries(IEnumerable<BaseNem> nemFile, DateTime graphFrom, DateTime graphTo, int graphInterval, DataUnitOfMeasure graphUom)
+    private SeriesEnergy CalculateValueSeries(string name, SeriesEnergy data, IRate rate)
     {
-        var results = new Dictionary<string, SeriesDecimal>();
+        var result = new SeriesEnergy(name);
+
+        foreach (var d in data.Values)
+        {
+            result.Values.Add(new SeriesEnergy.EnergyValue()
+            {
+                Day = d.Day,
+                Year = d.Year,
+                Interval = d.Interval,
+                Value = d.Value * rate.GetRate(d.Interval)
+            });
+        }
+        return result;
+    }
+
+
+    private static Dictionary<string, SeriesEnergy> GenerateDataSeries(IEnumerable<BaseNem> nemFile, DateTime graphFrom, DateTime graphTo, int graphInterval, DataUnitOfMeasure graphUom)
+    {
+        var results = new Dictionary<string, SeriesEnergy>();
         
-        SeriesDecimal currentSeries = null;
+        SeriesEnergy currentSeries = null;
         var nemInterval = -1;
         var nemUom = DataUnitOfMeasure.Unknown;
 
@@ -177,7 +200,7 @@ public class Parser
                     // Not current series, check if in collection or make new one (and add it)
                     if (!results.TryGetValue(seriesName, out currentSeries))
                     {
-                        currentSeries = new SeriesDecimal(seriesName);
+                        currentSeries = new SeriesEnergy(seriesName);
                         results.Add(seriesName, currentSeries);
                     }
             }
@@ -197,18 +220,49 @@ public class Parser
                 // Check if match to desired interval and unit of meassure
                 if (graphInterval == nemInterval && nemUom == graphUom)
                     // If so... just use
-                    currentSeries.Values.AddRange(datarecord.IntervalValue);
+                    currentSeries.Values.AddRange(ConvertToEnergySeries(datarecord));
                 else
                     // If not... remap
-                    currentSeries.Values.AddRange(DataRemapping.RemapValues(datarecord.IntervalValue, graphInterval,
-                        nemInterval, graphUom, nemUom));
+                    currentSeries.Values.AddRange(RemapToEnergySeries(datarecord, graphInterval, nemInterval, graphUom, nemUom));
             }
         }
 
         return results;
     }
 
-    private static AxisDateTime GenerateAxis(DateTime graphFrom, DateTime graphTo, int graphInterval)
+    private static IEnumerable<SeriesEnergy.EnergyValue> ConvertToEnergySeries(IntervalDataRecord300 record300)
+    {
+        var l = record300.IntervalValue.Length;
+        var result = new SeriesEnergy.EnergyValue[l];
+
+        for (var i = 0; i < l; i++)
+        {
+            result[i] = new SeriesEnergy.EnergyValue
+            {
+                Year = record300.IntervalDate.Year,
+                Day = record300.IntervalDate.DayOfYear,
+                Interval = i,
+                Value = record300.IntervalValue[i]
+            };
+        }
+        return result;
+    }
+    
+    private static IEnumerable<SeriesEnergy.EnergyValue> RemapToEnergySeries(IntervalDataRecord300 record300,  int graphInterval, int nemInterval, DataUnitOfMeasure graphUom, DataUnitOfMeasure nemUom)
+    {
+        if (graphUom != nemUom)
+            throw new NotImplementedException("Not implemented ability to convert Unit of Measure.");
+
+        var remappedData = DataRemapping.RemapValues(record300.IntervalValue, graphInterval, nemInterval);
+
+        var newRecrd300 = new IntervalDataRecord300(record300.IntervalDate, remappedData,
+            record300.QualityMethod, record300.ReasonCode, record300.ReasonDescription, record300.UpdateDateTime,
+            record300.MSATSLoadDateTime);
+
+        return ConvertToEnergySeries(newRecrd300);
+    }
+
+    private static AxisDateTime GenerateAxis(DateTime graphFrom, DateTime graphTo, int intervalMins)
     {
         // Work out Axis buckets
         var result = new AxisDateTime
@@ -220,7 +274,7 @@ public class Parser
         while (bucket < graphTo.AddDays(1))
         {
             result.Values.Add(bucket.ToString(), bucket);
-            bucket += new TimeSpan(0, graphInterval, 0);
+            bucket += new TimeSpan(0, intervalMins, 0);
         }
 
         return result;

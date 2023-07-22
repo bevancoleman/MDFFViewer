@@ -45,7 +45,7 @@ public class DataRemappingTests
             0.00600000000000m, 0.00600000000000m, 0.00500000000000m
         };
 
-        var result = DataRemapping.RemapValues(input30Interval, 30, 30, DataUnitOfMeasure.kWh, DataUnitOfMeasure.kWh);
+        var result = DataRemapping.RemapValues(input30Interval, 30, 30);
 
         Assert.That(result, Is.EqualTo(expectedInput30Interval));
     }
@@ -129,7 +129,7 @@ public class DataRemappingTests
             0.73800000000000m, 0.56000000000000m, 0.46600000000000m
         };
 
-        var result = DataRemapping.RemapValues(input5Interval, 30, 5, DataUnitOfMeasure.kWh, DataUnitOfMeasure.kWh);
+        var result = DataRemapping.RemapValues(input5Interval, 30, 5);
 
         Assert.That(result, Is.EqualTo(expectedInput5Interval));
     }

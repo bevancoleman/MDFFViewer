@@ -33,16 +33,16 @@ public class TimeOfUseRate : IRate
         }
     }
     
-    public void SetTariff(string name, TimeSpan fromInterval, TimeSpan toInterval, decimal rateIncGst)
+    public void SetTariff(string name, TimeSpan from, TimeSpan to, decimal rateIncGst)
     {
-        var fromIntervalInt = (int)(fromInterval.TotalMinutes) / MinsPerIntervalInDay;
-        var toIntervalInt = (int)(toInterval.TotalMinutes) / MinsPerIntervalInDay;;
+        var fromIntervalInt = (int)(from.TotalMinutes) / MinsPerIntervalInDay;
+        var toIntervalInt = (int)(to.TotalMinutes) / MinsPerIntervalInDay;;
         SetTariff(name, fromIntervalInt, toIntervalInt, rateIncGst);
     }
 
     public decimal GetRate(int interval)
     {
-        if (interval < 0 || interval >= TariffPerInterval.Length)
+        if (interval < 0 || interval > TariffPerInterval.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(interval));
         }

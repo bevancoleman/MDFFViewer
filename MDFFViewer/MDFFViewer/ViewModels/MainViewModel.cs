@@ -10,6 +10,7 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.VisualElements;
 using MDFFParserLibrary;
 using MDFFParserLibrary.Models.Enums;
+using MDFFParserLibrary.Models.Graph;
 using ReactiveUI;
 using SkiaSharp;
 
@@ -57,7 +58,7 @@ public class MainViewModel : ViewModelBase
             foreach (var dataSeries in seriesData.DataSeries)
             {
                 Series.Add(new LineSeries<decimal>() {
-                    Values = dataSeries.Value.Values,
+                    Values = GetDecimalValues(dataSeries.Value.Values),
                     Fill = null,
                     Name = dataSeries.Value.Name,
                     GeometrySize = 5,
@@ -66,5 +67,16 @@ public class MainViewModel : ViewModelBase
                 });
             }
         });
+    }
+
+    private decimal[] GetDecimalValues(List<SeriesEnergy.EnergyValue> valueValues)
+    {
+        var ret = new decimal[valueValues.Count];
+
+        for (var i = 0; i < ret.Length; i++)
+        {
+            ret[i] = valueValues[i].Value;
+        }
+        return ret;
     }
 }

@@ -4,8 +4,8 @@ public class BasicGraph
 {
     public BasicGraph()
     {
-        DataSeries = new Dictionary<string, SeriesDecimal>();
-        ValueSeries = new Dictionary<string, SeriesDecimal>();
+        DataSeries = new Dictionary<string, SeriesEnergy>();
+        ValueSeries = new Dictionary<string, SeriesEnergy>();
     }
 
     /// <summary>
@@ -16,10 +16,10 @@ public class BasicGraph
     /// <summary>
     /// Energy Usage Series
     /// </summary>
-    public Dictionary<string, SeriesDecimal> DataSeries { get; set; }
+    public Dictionary<string, SeriesEnergy> DataSeries { get; set; }
 
     /// <summary>
     /// Energy Cost Series
     /// </summary>
-    public Dictionary<string, SeriesDecimal> ValueSeries { get; set; }
+    public Dictionary<string, SeriesEnergy> ValueSeries { get; set; }
 }

@@ -18,8 +18,7 @@ internal class Program
         var parser = new Parser();
         var results = parser.ReadFile(file);
 
-        var seriesData = parser.ConvertToSeries(results, new DateTime(2023, 05, 01), new DateTime(2023, 05, 01), 30,
-            DataUnitOfMeasure.kWh);
+        var seriesData = parser.ConvertToSeries(results, new DateTime(2023, 05, 01), new DateTime(2023, 05, 01), 30, DataUnitOfMeasure.kWh);
 
         /*foreach (var result in results)
         {

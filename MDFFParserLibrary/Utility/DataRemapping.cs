@@ -5,16 +5,12 @@ namespace MDFFParserLibrary.Utility;
 
 public static class DataRemapping
 {
-    public static IEnumerable<decimal> RemapValues(decimal[] nemIntervalValue, int graphInterval, int nemInterval,
-        DataUnitOfMeasure graphUom, DataUnitOfMeasure nemUom)
+    // Remap decimal array into another. Used when Intervals are different
+    public static decimal[] RemapValues(decimal[] decimalArray, int graphInterval, int nemInterval)
     {
         if (graphInterval < nemInterval)
             throw new NotImplementedException("Not implemented ability to resample upwards.");
-
-        if (graphUom != nemUom)
-            throw new NotImplementedException("Not implemented ability to convert Unit of Measure.");
-
-
+        
         var ret = new decimal[Intervals.MinsInDay / graphInterval];
         var multiple = graphInterval / nemInterval;
 
@@ -27,7 +23,7 @@ public static class DataRemapping
 
             while (nemS < nemE)
             {
-                sumVal += nemIntervalValue[nemS];
+                sumVal += decimalArray[nemS];
                 nemS++;
             }
 
